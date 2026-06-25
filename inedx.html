@@ -1,0 +1,1947 @@
+Сделал **zoom out 20%** (`GAME_ZOOM = 0.80`) по твоему prompt. 
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Snake Cursor Hunt — Very Impossible Mode</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #02070c;
+      font-family: Arial, Helvetica, sans-serif;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      display: block;
+      background: #02070c;
+    }
+
+    .hud {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 20;
+      min-width: 150px;
+      padding: 9px 12px;
+      border-radius: 14px;
+      color: #f4fbff;
+      font-size: 13px;
+      font-weight: 900;
+      line-height: 1.35;
+      letter-spacing: 0.25px;
+      text-align: left;
+      user-select: none;
+      background:
+        linear-gradient(135deg, rgba(3, 7, 11, 0.86), rgba(13, 23, 31, 0.74)),
+        radial-gradient(circle at top, rgba(255, 55, 55, 0.17), transparent 58%);
+      border: 1px solid rgba(255, 65, 65, 0.36);
+      box-shadow:
+        0 0 18px rgba(255, 40, 40, 0.13),
+        0 10px 25px rgba(0, 0, 0, 0.5),
+        inset 0 0 14px rgba(255, 255, 255, 0.035);
+      backdrop-filter: blur(9px);
+    }
+
+    .mode {
+      color: #ff4b4b;
+      font-size: 8px;
+      letter-spacing: 1.45px;
+      margin-bottom: 3px;
+    }
+
+    .coin-hud {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      z-index: 20;
+      padding: 10px 14px;
+      border-radius: 999px;
+      color: #ffe58a;
+      font-size: 15px;
+      font-weight: 1000;
+      user-select: none;
+      background:
+        linear-gradient(135deg, rgba(12, 9, 2, 0.88), rgba(34, 27, 7, 0.72)),
+        radial-gradient(circle at top, rgba(255, 210, 55, 0.26), transparent 62%);
+      border: 1px solid rgba(255, 202, 55, 0.46);
+      box-shadow:
+        0 0 24px rgba(255, 190, 30, 0.2),
+        0 10px 26px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(9px);
+    }
+
+    .countdown {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at center, rgba(255, 50, 50, 0.12), transparent 45%),
+        rgba(0, 0, 0, 0.18);
+      backdrop-filter: blur(3px);
+    }
+
+    .countdown-number {
+      color: white;
+      font-size: clamp(86px, 18vw, 200px);
+      font-weight: 1000;
+      text-shadow:
+        0 0 24px rgba(255, 55, 55, 0.85),
+        0 0 80px rgba(255, 55, 55, 0.48),
+        0 18px 70px rgba(0, 0, 0, 0.95);
+      animation: countdownPop 1s infinite;
+    }
+
+    @keyframes countdownPop {
+      0% {
+        transform: scale(0.72);
+        opacity: 0.18;
+        filter: blur(4px);
+      }
+
+      34% {
+        transform: scale(1.1);
+        opacity: 1;
+        filter: blur(0);
+      }
+
+      100% {
+        transform: scale(0.9);
+        opacity: 0.75;
+        filter: blur(1px);
+      }
+    }
+
+    .game-over {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      color: white;
+      background:
+        radial-gradient(circle at center, rgba(150, 20, 20, 0.14), transparent 48%),
+        rgba(0, 0, 0, 0.83);
+      backdrop-filter: blur(8px);
+    }
+
+    .panel {
+      border-radius: 18px;
+      padding: 14px;
+      background:
+        linear-gradient(160deg, rgba(5, 8, 12, 0.95), rgba(17, 26, 34, 0.92)),
+        radial-gradient(circle at top, rgba(255, 60, 60, 0.14), transparent 62%);
+      border: 1px solid rgba(255, 70, 70, 0.28);
+      box-shadow:
+        0 0 30px rgba(255, 40, 40, 0.1),
+        0 0 60px rgba(0, 0, 0, 0.8),
+        inset 0 0 14px rgba(255, 255, 255, 0.035);
+    }
+
+    .result-panel {
+      position: fixed;
+      left: 50%;
+      top: 42%;
+      transform: translate(-50%, -50%);
+      width: min(320px, 56vw);
+      text-align: center;
+      z-index: 63;
+      padding: 18px 16px;
+    }
+
+    .result-panel h1 {
+      color: #ff3838;
+      font-size: 30px;
+      margin-bottom: 12px;
+      letter-spacing: 0.5px;
+      text-shadow: 0 0 22px rgba(255, 45, 45, 0.42);
+    }
+
+    .result-panel p {
+      font-size: 16px;
+      margin: 8px 0;
+      color: #eef6ff;
+    }
+
+    .restart-btn,
+    .copy-btn,
+    .skin-btn {
+      border: none;
+      border-radius: 999px;
+      color: white;
+      font-weight: 900;
+      cursor: pointer;
+      transition: transform 0.15s ease, opacity 0.15s ease, filter 0.15s ease;
+    }
+
+    .restart-btn {
+      margin-top: 16px;
+      padding: 11px 24px;
+      background: linear-gradient(135deg, #ff3030, #8f1515);
+      font-size: 16px;
+      box-shadow:
+        0 0 18px rgba(255, 50, 50, 0.22),
+        0 10px 20px rgba(0, 0, 0, 0.42);
+    }
+
+    .restart-btn:hover,
+    .copy-btn:hover,
+    .skin-btn:hover {
+      transform: scale(1.04);
+      filter: brightness(1.1);
+    }
+
+    .friend-box {
+      position: fixed;
+      left: 12px;
+      bottom: 12px;
+      width: min(280px, 24vw);
+      z-index: 64;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 14px;
+    }
+
+    .friend-box h2,
+    .shop-panel h2 {
+      color: #ff4b4b;
+      font-size: 18px;
+      margin-bottom: 4px;
+      letter-spacing: 0.4px;
+      text-shadow: 0 0 18px rgba(255, 60, 60, 0.35);
+    }
+
+    .friend-box p {
+      color: #b7c9d8;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .url-input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.42);
+      border: 1px solid rgba(120, 200, 255, 0.18);
+      color: #e9f7ff;
+      outline: none;
+      font-size: 12px;
+    }
+
+    .copy-btn {
+      padding: 10px 14px;
+      background: linear-gradient(135deg, #2f78ff, #193b8f);
+      font-size: 14px;
+      box-shadow: 0 8px 18px rgba(35, 105, 255, 0.18);
+    }
+
+    .copy-status {
+      min-height: 14px;
+      color: #5bff88;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .shop-panel {
+      position: fixed;
+      right: 12px;
+      bottom: 12px;
+      width: min(280px, 24vw);
+      max-height: 260px;
+      z-index: 64;
+      display: flex;
+      flex-direction: column;
+      padding: 14px;
+    }
+
+    .shop-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+      font-size: 12px;
+      color: #ffe58a;
+      font-weight: 900;
+    }
+
+    .shop-list {
+      overflow-y: auto;
+      max-height: 165px;
+      padding-right: 4px;
+      scrollbar-width: thin;
+    }
+
+    .shop-list::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .shop-list::-webkit-scrollbar-thumb {
+      border-radius: 999px;
+      background: rgba(255, 70, 70, 0.35);
+    }
+
+    .skin-card {
+      display: grid;
+      grid-template-columns: 68px 1fr auto;
+      align-items: center;
+      gap: 8px;
+      padding: 8px;
+      margin-bottom: 8px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.045);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .skin-snake-preview {
+      position: relative;
+      width: 64px;
+      height: 32px;
+      border-radius: 10px;
+      background: radial-gradient(circle at center, rgba(255, 255, 255, 0.07), rgba(0, 0, 0, 0.28));
+      overflow: hidden;
+    }
+
+    .mini-seg {
+      position: absolute;
+      width: 13px;
+      height: 10px;
+      border-radius: 50%;
+      border: 1px solid rgba(0, 0, 0, 0.42);
+      transform: rotate(-18deg);
+    }
+
+    .mini-head {
+      position: absolute;
+      width: 18px;
+      height: 14px;
+      border-radius: 50%;
+      left: 41px;
+      top: 9px;
+      border: 2px solid rgba(0, 0, 0, 0.62);
+    }
+
+    .mini-eye {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      border-radius: 50%;
+      background: white;
+      right: 4px;
+    }
+
+    .mini-eye.one {
+      top: 4px;
+    }
+
+    .mini-eye.two {
+      bottom: 4px;
+    }
+
+    .skin-name {
+      font-weight: 900;
+      font-size: 12px;
+      color: #f5fbff;
+    }
+
+    .skin-price {
+      font-size: 11px;
+      color: #ffe58a;
+      margin-top: 2px;
+    }
+
+    .skin-btn {
+      padding: 7px 10px;
+      font-size: 11px;
+      background: linear-gradient(135deg, #222d38, #10151c);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      white-space: nowrap;
+    }
+
+    .skin-btn.buy {
+      color: #171000;
+      background: linear-gradient(135deg, #ffd84f, #c77e0d);
+    }
+
+    .skin-btn.selected {
+      color: #0a160d;
+      background: linear-gradient(135deg, #5bff88, #10a84a);
+    }
+
+    .skin-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      filter: none;
+    }
+
+    @media (max-width: 900px) {
+      .hud {
+        top: 9px;
+        left: 9px;
+        font-size: 12px;
+        padding: 8px 10px;
+        min-width: 135px;
+      }
+
+      .coin-hud {
+        top: 9px;
+        right: 9px;
+        font-size: 13px;
+        padding: 8px 12px;
+      }
+
+      .result-panel {
+        width: min(290px, 84vw);
+        top: 31%;
+      }
+
+      .result-panel h1 {
+        font-size: 25px;
+      }
+
+      .result-panel p {
+        font-size: 14px;
+      }
+
+      .friend-box {
+        left: 8px;
+        bottom: 8px;
+        width: 205px;
+        padding: 11px;
+      }
+
+      .friend-box h2,
+      .shop-panel h2 {
+        font-size: 15px;
+      }
+
+      .friend-box p {
+        font-size: 10px;
+      }
+
+      .shop-panel {
+        right: 8px;
+        bottom: 8px;
+        width: 205px;
+        max-height: 218px;
+        padding: 11px;
+      }
+
+      .shop-list {
+        max-height: 128px;
+      }
+
+      .skin-card {
+        grid-template-columns: 1fr;
+        gap: 6px;
+      }
+
+      .skin-snake-preview {
+        width: 100%;
+      }
+
+      .skin-btn {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .result-panel {
+        top: 26%;
+        width: 260px;
+        padding: 14px;
+      }
+
+      .friend-box {
+        width: calc(50vw - 13px);
+      }
+
+      .shop-panel {
+        width: calc(50vw - 13px);
+      }
+
+      .url-input {
+        font-size: 10px;
+        padding: 8px;
+      }
+
+      .copy-btn {
+        font-size: 11px;
+        padding: 8px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="game"></canvas>
+
+  <div class="hud">
+    <div class="mode">VERY IMPOSSIBLE</div>
+    Length: <span id="lengthText">0</span> cm<br>
+    Best: <span id="bestText">0</span> cm
+  </div>
+
+  <div class="coin-hud">
+    🪙 <span id="coinText">0</span>
+  </div>
+
+  <div class="countdown" id="countdown">
+    <div class="countdown-number" id="countdownNumber">3</div>
+  </div>
+
+  <div class="game-over" id="gameOver">
+    <div class="panel result-panel">
+      <h1>Game Over</h1>
+      <p>Your length: <span id="finalLength">0</span> cm</p>
+      <p>Best length: <span id="finalBest">0</span> cm</p>
+      <button class="restart-btn" onclick="restartGame()">Restart</button>
+    </div>
+
+    <div class="panel friend-box">
+      <h2>Friend URL</h2>
+      <p>Copy this link and send it to your friend.</p>
+      <input class="url-input" id="friendUrl" readonly>
+      <button class="copy-btn" onclick="copyFriendUrl()">Copy URL</button>
+      <div class="copy-status" id="copyStatus"></div>
+    </div>
+
+    <div class="panel shop-panel">
+      <h2>Shop</h2>
+      <div class="shop-top">
+        <span>Your coins</span>
+        <span>🪙 <span id="shopCoinText">0</span></span>
+      </div>
+      <div class="shop-list" id="shopList"></div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+
+    const lengthText = document.getElementById("lengthText");
+    const bestText = document.getElementById("bestText");
+    const coinText = document.getElementById("coinText");
+    const shopCoinText = document.getElementById("shopCoinText");
+
+    const gameOverScreen = document.getElementById("gameOver");
+    const finalLength = document.getElementById("finalLength");
+    const finalBest = document.getElementById("finalBest");
+
+    const countdownEl = document.getElementById("countdown");
+    const countdownNumber = document.getElementById("countdownNumber");
+
+    const shopList = document.getElementById("shopList");
+    const friendUrl = document.getElementById("friendUrl");
+    const copyStatus = document.getElementById("copyStatus");
+
+    const BEST_KEY = "snake_cursor_hunt_best_cm_private_browser_only";
+    const COIN_KEY = "snake_cursor_hunt_private_coins";
+    const OWNED_SKINS_KEY = "snake_cursor_hunt_owned_skins";
+    const SELECTED_SKIN_KEY = "snake_cursor_hunt_selected_skin";
+
+    const GAME_ZOOM = 0.80;
+    const WORLD_SPEED = 155;
+    const START_ROCK_COUNT = 7;
+    const MAX_ROCK_COUNT = 21;
+    const ROCK_MIN_DISTANCE = 330;
+    const VISUAL_GROWTH_PER_CM = 0.4;
+    const BOMB_MOUSE_COUNT = 2;
+    const BOMB_PENALTY_CM = 3;
+    const COINS_PER_MOUSE = 3;
+
+    let w = 0;
+    let h = 0;
+    let time = 0;
+    let lastTime = 0;
+
+    let snake;
+    let rocks = [];
+    let mouse;
+    let bombMice = [];
+    let dust = [];
+    let particles = [];
+    let floatingTexts = [];
+
+    let lengthCm = 0;
+    let gameOver = false;
+    let gameStarted = false;
+    let countdownEnd = 0;
+    let bgScroll = 0;
+    let growthBuffer = 0;
+    let screenShake = 0;
+    let redFlash = 0;
+
+    const target = {
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2
+    };
+
+    const SKINS = [
+      { id: "classic", name: "Classic Red", price: 0, primary: "#d9222b", secondary: "#2b3034", head: "#e82b33", glow: "rgba(255, 50, 50, 0.35)", tongue: "#315cff" },
+      { id: "toxic", name: "Toxic Green", price: 60, primary: "#39ff74", secondary: "#101f16", head: "#54ff8a", glow: "rgba(70, 255, 120, 0.42)", tongue: "#00fff0" },
+      { id: "ice", name: "Ice Viper", price: 120, primary: "#78dcff", secondary: "#102736", head: "#b8f2ff", glow: "rgba(100, 220, 255, 0.42)", tongue: "#ffffff" },
+      { id: "neon", name: "Neon Venom", price: 240, primary: "#d940ff", secondary: "#151020", head: "#ff6cff", glow: "rgba(220, 70, 255, 0.45)", tongue: "#00eaff" },
+      { id: "lava", name: "Lava Hunter", price: 500, primary: "#ff7a18", secondary: "#2a0d06", head: "#ff3b16", glow: "rgba(255, 90, 20, 0.5)", tongue: "#ffd000" },
+      { id: "shadow", name: "Shadow Black", price: 1000, primary: "#262d38", secondary: "#020305", head: "#3d4556", glow: "rgba(130, 160, 255, 0.25)", tongue: "#93a7ff" },
+      { id: "gold", name: "Gold Skin", price: 2000, primary: "#ffd447", secondary: "#3d2c06", head: "#ffe680", glow: "rgba(255, 210, 60, 0.58)", tongue: "#ffffff" },
+      { id: "ruby", name: "Ruby King", price: 4000, primary: "#ff174d", secondary: "#27000b", head: "#ff4f78", glow: "rgba(255, 30, 80, 0.55)", tongue: "#ffc7d8" },
+      { id: "galaxy", name: "Galaxy Snake", price: 8000, primary: "#4d7cff", secondary: "#130b2c", head: "#8a5cff", glow: "rgba(110, 90, 255, 0.58)", tongue: "#ff7cff" },
+      { id: "cyber", name: "Cyber Phantom", price: 12000, primary: "#00ffe1", secondary: "#051616", head: "#48fff0", glow: "rgba(0, 255, 225, 0.6)", tongue: "#ffee00" },
+      { id: "royal", name: "Royal Gold", price: 16000, primary: "#fff2a6", secondary: "#513a09", head: "#ffffff", glow: "rgba(255, 235, 150, 0.65)", tongue: "#ffd000" },
+      { id: "dragon", name: "Dragon God", price: 20000, primary: "#ff2d2d", secondary: "#090000", head: "#ffb000", glow: "rgba(255, 70, 0, 0.75)", tongue: "#00e5ff" }
+    ];
+
+    function loadNumber(key, fallback) {
+      try {
+        const value = Number(localStorage.getItem(key));
+        return Number.isFinite(value) ? value : fallback;
+      } catch (e) {
+        return fallback;
+      }
+    }
+
+    function saveNumber(key, value) {
+      try {
+        localStorage.setItem(key, String(value));
+      } catch (e) {}
+    }
+
+    function loadOwnedSkins() {
+      try {
+        const value = JSON.parse(localStorage.getItem(OWNED_SKINS_KEY) || '["classic"]');
+        return Array.isArray(value) ? value : ["classic"];
+      } catch (e) {
+        return ["classic"];
+      }
+    }
+
+    function saveOwnedSkins() {
+      try {
+        localStorage.setItem(OWNED_SKINS_KEY, JSON.stringify(ownedSkins));
+      } catch (e) {}
+    }
+
+    let best = loadNumber(BEST_KEY, 0);
+    let coins = loadNumber(COIN_KEY, 0);
+    let ownedSkins = loadOwnedSkins();
+    let selectedSkinId = localStorage.getItem(SELECTED_SKIN_KEY) || "classic";
+
+    if (!ownedSkins.includes("classic")) ownedSkins.push("classic");
+    if (!ownedSkins.includes(selectedSkinId)) selectedSkinId = "classic";
+
+    bestText.textContent = best;
+    coinText.textContent = coins;
+
+    function getSkin() {
+      return SKINS.find(s => s.id === selectedSkinId) || SKINS[0];
+    }
+
+    function updateCoinUI() {
+      coinText.textContent = coins;
+      shopCoinText.textContent = coins;
+    }
+
+    function resizeCanvas() {
+      w = canvas.width = window.innerWidth;
+      h = canvas.height = window.innerHeight;
+    }
+
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
+    function random(min, max) {
+      return min + Math.random() * (max - min);
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function normalizeAngle(angle) {
+      while (angle > Math.PI) angle -= Math.PI * 2;
+      while (angle < -Math.PI) angle += Math.PI * 2;
+      return angle;
+    }
+
+    function screenToWorldX(screenX) {
+      return (screenX - w / 2) / GAME_ZOOM + w / 2;
+    }
+
+    function screenToWorldY(screenY) {
+      return (screenY - h / 2) / GAME_ZOOM + h / 2;
+    }
+
+    window.addEventListener("pointermove", function(e) {
+      target.x = screenToWorldX(e.clientX);
+      target.y = screenToWorldY(e.clientY);
+    });
+
+    window.addEventListener("touchmove", function(e) {
+      e.preventDefault();
+
+      if (e.touches.length > 0) {
+        target.x = screenToWorldX(e.touches[0].clientX);
+        target.y = screenToWorldY(e.touches[0].clientY);
+      }
+    }, { passive: false });
+
+    function createGame() {
+      lengthCm = 0;
+      gameOver = false;
+      gameStarted = false;
+      countdownEnd = 0;
+      bgScroll = 0;
+      growthBuffer = 0;
+      screenShake = 0;
+      redFlash = 0;
+
+      rocks = [];
+      bombMice = [];
+      dust = [];
+      particles = [];
+      floatingTexts = [];
+
+      snake = {
+        head: {
+          x: w / 2,
+          y: h * 0.63,
+          angle: -Math.PI / 2
+        },
+        segments: [],
+        spacing: 12,
+        baseSegments: 17
+      };
+
+      target.x = snake.head.x;
+      target.y = snake.head.y - 80;
+
+      for (let i = 0; i < snake.baseSegments; i++) {
+        snake.segments.push({
+          x: snake.head.x,
+          y: snake.head.y + i * snake.spacing
+        });
+      }
+
+      createDust();
+      createRocks(START_ROCK_COUNT);
+      spawnMouse(false);
+      createBombMice();
+
+      lengthText.textContent = lengthCm;
+      best = loadNumber(BEST_KEY, 0);
+      bestText.textContent = best;
+      updateCoinUI();
+
+      gameOverScreen.style.display = "none";
+      copyStatus.textContent = "";
+
+      startCountdown();
+    }
+
+    function startCountdown() {
+      gameStarted = false;
+      countdownEnd = performance.now() + 3000;
+      countdownEl.style.display = "flex";
+      countdownNumber.textContent = "3";
+    }
+
+    function updateCountdown(now) {
+      const left = Math.max(0, countdownEnd - now);
+      const number = Math.ceil(left / 1000);
+
+      if (left <= 0) {
+        gameStarted = true;
+        countdownEl.style.display = "none";
+        return;
+      }
+
+      countdownNumber.textContent = String(number);
+    }
+
+    function createDust() {
+      for (let i = 0; i < 170; i++) {
+        dust.push({
+          x: random(0, w),
+          y: random(-80, h + 80),
+          size: random(0.7, 2.7),
+          alpha: random(0.04, 0.17),
+          speed: random(0.42, 1.25),
+          drift: random(-8, 8)
+        });
+      }
+    }
+
+    function createRocks(count) {
+      for (let i = 0; i < count; i++) {
+        addRock(-260 + i * random(265, 435));
+      }
+    }
+
+    function addRock(yPosition) {
+      let rock;
+      let tries = 0;
+
+      do {
+        rock = makeRock(random(95, w - 95), yPosition);
+        tries++;
+      } while (!rockHasDistance(rock, null) && tries < 260);
+
+      rocks.push(rock);
+    }
+
+    function makeRock(x, y) {
+      const r = random(41, 74);
+      const points = [];
+      const pointCount = 11;
+
+      for (let i = 0; i < pointCount; i++) {
+        const a = (Math.PI * 2 / pointCount) * i;
+        const rr = r * random(0.72, 1.2);
+
+        points.push({
+          x: Math.cos(a) * rr,
+          y: Math.sin(a) * rr
+        });
+      }
+
+      return {
+        x,
+        y,
+        r,
+        speed: random(WORLD_SPEED * 0.92, WORLD_SPEED * 1.22),
+        drift: random(-7, 7),
+        rotation: random(0, Math.PI * 2),
+        spin: random(-0.34, 0.34),
+        points
+      };
+    }
+
+    function rockHasDistance(newRock, ignoreRock) {
+      for (const rock of rocks) {
+        if (rock === ignoreRock) continue;
+
+        const d = Math.hypot(newRock.x - rock.x, newRock.y - rock.y);
+        const need = ROCK_MIN_DISTANCE + newRock.r + rock.r;
+
+        if (d < need) return false;
+      }
+
+      return true;
+    }
+
+    function respawnRock(rock) {
+      let newRock;
+      let tries = 0;
+      const otherRocks = rocks.filter(r => r !== rock);
+      let topY = -150;
+
+      if (otherRocks.length > 0) {
+        topY = Math.min(...otherRocks.map(r => r.y));
+      }
+
+      do {
+        newRock = makeRock(random(95, w - 95), topY - random(330, 540));
+        tries++;
+      } while (!rockHasDistance(newRock, rock) && tries < 260);
+
+      Object.assign(rock, newRock);
+    }
+
+    function updateDifficulty() {
+      const wantedRocks = clamp(
+        START_ROCK_COUNT + Math.floor(lengthCm / 3),
+        START_ROCK_COUNT,
+        MAX_ROCK_COUNT
+      );
+
+      while (rocks.length < wantedRocks) {
+        const topY = Math.min(...rocks.map(r => r.y));
+        addRock(topY - random(360, 560));
+      }
+    }
+
+    function keepRocksSeparated() {
+      for (let i = 0; i < rocks.length; i++) {
+        for (let j = i + 1; j < rocks.length; j++) {
+          const a = rocks[i];
+          const b = rocks[j];
+
+          const dx = b.x - a.x;
+          const dy = b.y - a.y;
+          const d = Math.hypot(dx, dy);
+          const need = ROCK_MIN_DISTANCE + a.r + b.r;
+
+          if (d < need && d > 0.01) {
+            const push = (need - d) * 0.025;
+            const nx = dx / d;
+            const ny = dy / d;
+
+            a.x -= nx * push;
+            a.y -= ny * push;
+            b.x += nx * push;
+            b.y += ny * push;
+
+            a.x = clamp(a.x, 90, w - 90);
+            b.x = clamp(b.x, 90, w - 90);
+          }
+        }
+      }
+    }
+
+    function spawnMouse(fromTop) {
+      let x = w / 2;
+      let y = h / 2;
+      let safe = false;
+      let tries = 0;
+
+      while (!safe && tries < 320) {
+        x = random(75, w - 75);
+        y = fromTop ? random(-165, -60) : random(120, h - 95);
+        safe = true;
+
+        for (const rock of rocks) {
+          const d = Math.hypot(x - rock.x, y - rock.y);
+
+          if (d < rock.r + 130) {
+            safe = false;
+            break;
+          }
+        }
+
+        if (safe) {
+          for (const bomb of bombMice) {
+            const d = Math.hypot(x - bomb.x, y - bomb.y);
+
+            if (d < 140) {
+              safe = false;
+              break;
+            }
+          }
+        }
+
+        tries++;
+      }
+
+      mouse = {
+        x,
+        y,
+        size: 18,
+        pulse: random(0, 6)
+      };
+    }
+
+    function createBombMice() {
+      bombMice = [];
+
+      for (let i = 0; i < BOMB_MOUSE_COUNT; i++) {
+        bombMice.push(spawnBombMouse(false, null));
+      }
+    }
+
+    function spawnBombMouse(fromTop, ignoreBomb) {
+      let x = w / 2;
+      let y = h / 2;
+      let safe = false;
+      let tries = 0;
+
+      while (!safe && tries < 420) {
+        x = random(75, w - 75);
+        y = fromTop ? random(-280, -90) : random(130, h - 135);
+        safe = true;
+
+        for (const rock of rocks) {
+          const d = Math.hypot(x - rock.x, y - rock.y);
+
+          if (d < rock.r + 140) {
+            safe = false;
+            break;
+          }
+        }
+
+        if (safe && mouse) {
+          const d = Math.hypot(x - mouse.x, y - mouse.y);
+
+          if (d < 135) {
+            safe = false;
+          }
+        }
+
+        if (safe) {
+          for (const bomb of bombMice) {
+            if (bomb === ignoreBomb) continue;
+
+            const d = Math.hypot(x - bomb.x, y - bomb.y);
+
+            if (d < 155) {
+              safe = false;
+              break;
+            }
+          }
+        }
+
+        tries++;
+      }
+
+      return {
+        x,
+        y,
+        size: 18,
+        pulse: random(0, 6),
+        speed: WORLD_SPEED * random(0.9, 1.14)
+      };
+    }
+
+    function updateSnake(delta) {
+      const head = snake.head;
+
+      const dx = target.x - head.x;
+      const dy = target.y - head.y;
+      const dist = Math.hypot(dx, dy);
+
+      if (dist > 3) {
+        const desiredAngle = Math.atan2(dy, dx);
+        head.angle += normalizeAngle(desiredAngle - head.angle) * 0.18;
+
+        let speed = 110 + dist * 3.9;
+        speed = Math.min(speed, 980);
+
+        const move = Math.min(dist, speed * delta);
+
+        head.x += Math.cos(head.angle) * move;
+        head.y += Math.sin(head.angle) * move;
+      }
+
+      head.x = clamp(head.x, 24, w - 24);
+      head.y = clamp(head.y, 24, h - 24);
+
+      snake.segments[0].x = head.x;
+      snake.segments[0].y = head.y;
+
+      for (let i = 1; i < snake.segments.length; i++) {
+        const prev = snake.segments[i - 1];
+        const seg = snake.segments[i];
+
+        const sx = prev.x - seg.x;
+        const sy = prev.y - seg.y;
+        const d = Math.hypot(sx, sy);
+
+        if (d > snake.spacing) {
+          const a = Math.atan2(sy, sx);
+
+          seg.x = prev.x - Math.cos(a) * snake.spacing;
+          seg.y = prev.y - Math.sin(a) * snake.spacing;
+        }
+      }
+    }
+
+    function updateWorld(delta) {
+      bgScroll += WORLD_SPEED * delta;
+
+      for (const d of dust) {
+        d.y += WORLD_SPEED * delta * d.speed;
+        d.x += Math.sin(time * 0.7 + d.y * 0.013) * d.drift * delta;
+
+        if (d.y > h + 30) {
+          d.y = random(-100, -25);
+          d.x = random(0, w);
+        }
+      }
+
+      for (const rock of rocks) {
+        rock.y += rock.speed * delta;
+        rock.x += rock.drift * delta;
+        rock.rotation += rock.spin * delta;
+
+        if (rock.x < 90) {
+          rock.x = 90;
+          rock.drift *= -1;
+        }
+
+        if (rock.x > w - 90) {
+          rock.x = w - 90;
+          rock.drift *= -1;
+        }
+
+        if (rock.y - rock.r > h + 130) {
+          respawnRock(rock);
+        }
+      }
+
+      keepRocksSeparated();
+
+      mouse.y += WORLD_SPEED * delta;
+      mouse.pulse += delta * 7;
+
+      if (mouse.y > h + 90) {
+        spawnMouse(true);
+      }
+
+      for (const bomb of bombMice) {
+        bomb.y += bomb.speed * delta;
+        bomb.pulse += delta * 8;
+
+        if (bomb.y > h + 95) {
+          Object.assign(bomb, spawnBombMouse(true, bomb));
+        }
+      }
+    }
+
+    function updateParticles(delta) {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+
+        p.x += p.vx * delta;
+        p.y += p.vy * delta + WORLD_SPEED * delta * 0.62;
+        p.life -= delta;
+        p.size *= 0.985;
+
+        if (p.life <= 0 || p.size <= 0.2) {
+          particles.splice(i, 1);
+        }
+      }
+    }
+
+    function updateFloatingTexts(delta) {
+      for (let i = floatingTexts.length - 1; i >= 0; i--) {
+        const t = floatingTexts[i];
+
+        t.y -= 72 * delta;
+        t.life -= delta;
+        t.size += 9 * delta;
+
+        if (t.life <= 0) {
+          floatingTexts.splice(i, 1);
+        }
+      }
+
+      if (redFlash > 0) {
+        redFlash -= delta * 1.8;
+        redFlash = Math.max(0, redFlash);
+      }
+    }
+
+    function checkCollisions() {
+      const head = snake.head;
+
+      const mouseDist = Math.hypot(head.x - mouse.x, head.y - mouse.y);
+
+      if (mouseDist < mouse.size + 23) {
+        eatMouse();
+      }
+
+      for (const bomb of bombMice) {
+        const bombDist = Math.hypot(head.x - bomb.x, head.y - bomb.y);
+
+        if (bombDist < bomb.size + 23) {
+          hitBombMouse(bomb);
+          break;
+        }
+      }
+
+      for (const rock of rocks) {
+        const d = Math.hypot(head.x - rock.x, head.y - rock.y);
+
+        if (d < rock.r + 13) {
+          endGame();
+          break;
+        }
+      }
+    }
+
+    function eatMouse() {
+      lengthCm++;
+      lengthText.textContent = lengthCm;
+
+      coins += COINS_PER_MOUSE;
+      saveNumber(COIN_KEY, coins);
+      updateCoinUI();
+
+      showFloatingText(mouse.x, mouse.y - 20, "+3 coin", "#ffd84f", "rgba(255, 200, 40, 0.9)");
+
+      updateDifficulty();
+
+      growthBuffer += VISUAL_GROWTH_PER_CM;
+
+      while (growthBuffer >= 1) {
+        const last = snake.segments[snake.segments.length - 1];
+
+        snake.segments.push({
+          x: last.x,
+          y: last.y
+        });
+
+        growthBuffer -= 1;
+      }
+
+      for (let i = 0; i < 26; i++) {
+        particles.push({
+          x: mouse.x,
+          y: mouse.y,
+          vx: random(-165, 165),
+          vy: random(-160, 90),
+          size: random(2, 5.5),
+          life: random(0.35, 0.9),
+          color: Math.random() > 0.5 ? "#ffb8da" : "#b7f4ff"
+        });
+      }
+
+      spawnMouse(true);
+    }
+
+    function hitBombMouse(bomb) {
+      showFloatingText(bomb.x, bomb.y, "-3 cm", "#ff3030", "rgba(255, 0, 0, 0.9)");
+      triggerDamageEffect();
+
+      lengthCm = Math.max(0, lengthCm - BOMB_PENALTY_CM);
+      lengthText.textContent = lengthCm;
+
+      let visualLength = (snake.segments.length - snake.baseSegments) + growthBuffer;
+      visualLength = Math.max(0, visualLength - BOMB_PENALTY_CM * VISUAL_GROWTH_PER_CM);
+
+      const wantedExtraSegments = Math.floor(visualLength);
+      growthBuffer = visualLength - wantedExtraSegments;
+
+      const currentExtraSegments = snake.segments.length - snake.baseSegments;
+      const removeCount = Math.max(0, currentExtraSegments - wantedExtraSegments);
+
+      if (removeCount > 0) {
+        snake.segments.splice(snake.segments.length - removeCount, removeCount);
+      }
+
+      for (let i = 0; i < 38; i++) {
+        particles.push({
+          x: bomb.x,
+          y: bomb.y,
+          vx: random(-230, 230),
+          vy: random(-230, 125),
+          size: random(2, 7),
+          life: random(0.35, 1),
+          color: Math.random() > 0.5 ? "#ff3b30" : "#ffb000"
+        });
+      }
+
+      Object.assign(bomb, spawnBombMouse(true, bomb));
+    }
+
+    function showFloatingText(x, y, text, color, glow) {
+      floatingTexts.push({
+        x,
+        y,
+        text,
+        color,
+        glow,
+        life: 1,
+        size: 28
+      });
+    }
+
+    function triggerDamageEffect() {
+      screenShake = 18;
+      redFlash = 0.45;
+
+      if (navigator.vibrate) {
+        navigator.vibrate([90, 40, 90]);
+      }
+    }
+
+    function endGame() {
+      gameOver = true;
+      gameStarted = false;
+      countdownEl.style.display = "none";
+
+      if (lengthCm > best) {
+        best = lengthCm;
+        saveNumber(BEST_KEY, best);
+      }
+
+      finalLength.textContent = lengthCm;
+      finalBest.textContent = best;
+      bestText.textContent = best;
+
+      friendUrl.value = window.location.href;
+      renderShop();
+
+      gameOverScreen.style.display = "block";
+    }
+
+    function restartGame() {
+      createGame();
+    }
+
+    function renderShop() {
+      updateCoinUI();
+      shopList.innerHTML = "";
+
+      for (const skin of SKINS) {
+        const owned = ownedSkins.includes(skin.id);
+        const selected = selectedSkinId === skin.id;
+
+        const card = document.createElement("div");
+        card.className = "skin-card";
+
+        const preview = document.createElement("div");
+        preview.className = "skin-snake-preview";
+
+        for (let i = 0; i < 5; i++) {
+          const seg = document.createElement("div");
+          seg.className = "mini-seg";
+          seg.style.left = 6 + i * 9 + "px";
+          seg.style.top = 17 - i * 1.5 + "px";
+          seg.style.background = i % 2 === 0
+            ? "linear-gradient(135deg, " + skin.primary + ", " + skin.secondary + ")"
+            : "linear-gradient(135deg, " + skin.secondary + ", #050607)";
+          seg.style.boxShadow = "0 0 8px " + skin.glow;
+          preview.appendChild(seg);
+        }
+
+        const head = document.createElement("div");
+        head.className = "mini-head";
+        head.style.background = "linear-gradient(135deg, " + skin.secondary + ", " + skin.head + ")";
+        head.style.boxShadow = "0 0 14px " + skin.glow;
+
+        const eye1 = document.createElement("div");
+        eye1.className = "mini-eye one";
+
+        const eye2 = document.createElement("div");
+        eye2.className = "mini-eye two";
+
+        head.appendChild(eye1);
+        head.appendChild(eye2);
+        preview.appendChild(head);
+
+        const info = document.createElement("div");
+
+        const name = document.createElement("div");
+        name.className = "skin-name";
+        name.textContent = skin.name;
+
+        const price = document.createElement("div");
+        price.className = "skin-price";
+        price.textContent = skin.price === 0 ? "Free" : "🪙 " + skin.price;
+
+        info.appendChild(name);
+        info.appendChild(price);
+
+        const btn = document.createElement("button");
+        btn.className = "skin-btn";
+
+        if (selected) {
+          btn.textContent = "Selected";
+          btn.classList.add("selected");
+          btn.disabled = true;
+        } else if (owned) {
+          btn.textContent = "Select";
+          btn.onclick = function() {
+            selectedSkinId = skin.id;
+
+            try {
+              localStorage.setItem(SELECTED_SKIN_KEY, selectedSkinId);
+            } catch (e) {}
+
+            renderShop();
+          };
+        } else {
+          btn.textContent = "Buy";
+          btn.classList.add("buy");
+          btn.disabled = coins < skin.price;
+
+          btn.onclick = function() {
+            if (coins < skin.price) return;
+
+            coins -= skin.price;
+            saveNumber(COIN_KEY, coins);
+
+            ownedSkins.push(skin.id);
+            saveOwnedSkins();
+
+            selectedSkinId = skin.id;
+
+            try {
+              localStorage.setItem(SELECTED_SKIN_KEY, selectedSkinId);
+            } catch (e) {}
+
+            updateCoinUI();
+            renderShop();
+          };
+        }
+
+        card.appendChild(preview);
+        card.appendChild(info);
+        card.appendChild(btn);
+        shopList.appendChild(card);
+      }
+    }
+
+    function copyFriendUrl() {
+      const url = friendUrl.value || window.location.href;
+
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(function() {
+          copyStatus.textContent = "Copied!";
+        }).catch(function() {
+          fallbackCopy(url);
+        });
+      } else {
+        fallbackCopy(url);
+      }
+    }
+
+    function fallbackCopy(url) {
+      friendUrl.value = url;
+      friendUrl.select();
+
+      try {
+        document.execCommand("copy");
+        copyStatus.textContent = "Copied!";
+      } catch (e) {
+        copyStatus.textContent = "Copy manually";
+      }
+    }
+
+    function drawBackground() {
+      const gradient = ctx.createLinearGradient(0, 0, 0, h);
+      gradient.addColorStop(0, "#02050b");
+      gradient.addColorStop(0.24, "#061623");
+      gradient.addColorStop(0.55, "#082335");
+      gradient.addColorStop(0.82, "#061018");
+      gradient.addColorStop(1, "#010306");
+
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, w, h);
+
+      const blueGlow = ctx.createRadialGradient(
+        w * 0.5 + Math.sin(time * 0.25) * 70,
+        h * 0.3,
+        0,
+        w * 0.5,
+        h * 0.3,
+        Math.max(w, h) * 0.85
+      );
+
+      blueGlow.addColorStop(0, "rgba(52, 155, 205, 0.22)");
+      blueGlow.addColorStop(0.35, "rgba(18, 75, 105, 0.16)");
+      blueGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
+
+      ctx.fillStyle = blueGlow;
+      ctx.fillRect(0, 0, w, h);
+
+      const redFog = ctx.createRadialGradient(
+        w * 0.82,
+        h * 0.2 + Math.sin(time * 0.45) * 35,
+        0,
+        w * 0.82,
+        h * 0.2,
+        Math.max(w, h) * 0.5
+      );
+
+      redFog.addColorStop(0, "rgba(255, 55, 55, 0.12)");
+      redFog.addColorStop(0.5, "rgba(100, 15, 20, 0.06)");
+      redFog.addColorStop(1, "rgba(0, 0, 0, 0)");
+
+      ctx.fillStyle = redFog;
+      ctx.fillRect(0, 0, w, h);
+
+      const gap = 62;
+      const offset = bgScroll % gap;
+
+      ctx.lineWidth = 1;
+
+      for (let y = -gap; y < h + gap; y += gap) {
+        const movingY = y + offset;
+
+        ctx.strokeStyle = "rgba(100, 190, 220, 0.035)";
+        ctx.beginPath();
+        ctx.moveTo(0, movingY);
+
+        for (let x = 0; x <= w; x += 95) {
+          ctx.lineTo(
+            x,
+            movingY + Math.sin(time * 0.45 + x * 0.012 + movingY * 0.018) * 4
+          );
+        }
+
+        ctx.stroke();
+      }
+
+      for (let i = 0; i < 16; i++) {
+        const y = ((i * 90 + bgScroll * 0.45) % (h + 180)) - 90;
+        const x = (Math.sin(i * 2.3 + time * 0.3) * 0.5 + 0.5) * w;
+
+        const fog = ctx.createRadialGradient(x, y, 0, x, y, 180);
+        fog.addColorStop(0, "rgba(120, 210, 255, 0.035)");
+        fog.addColorStop(1, "rgba(0, 0, 0, 0)");
+
+        ctx.fillStyle = fog;
+        ctx.fillRect(0, 0, w, h);
+      }
+
+      for (const d of dust) {
+        ctx.globalAlpha = d.alpha;
+        ctx.fillStyle = "rgba(245, 252, 255, 0.75)";
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, d.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.globalAlpha = 1;
+
+      ctx.fillStyle = "rgba(0, 0, 0, 0.26)";
+      ctx.fillRect(0, 0, w, h);
+
+      const vignette = ctx.createRadialGradient(
+        w / 2,
+        h / 2,
+        Math.min(w, h) * 0.18,
+        w / 2,
+        h / 2,
+        Math.max(w, h) * 0.72
+      );
+
+      vignette.addColorStop(0, "rgba(0,0,0,0)");
+      vignette.addColorStop(1, "rgba(0,0,0,0.67)");
+
+      ctx.fillStyle = vignette;
+      ctx.fillRect(0, 0, w, h);
+    }
+
+    function drawRock(rock) {
+      ctx.save();
+      ctx.translate(rock.x, rock.y);
+      ctx.rotate(rock.rotation);
+
+      const headDist = Math.hypot(snake.head.x - rock.x, snake.head.y - rock.y);
+
+      if (headDist < rock.r + 110) {
+        ctx.strokeStyle = "rgba(255, 60, 55, 0.5)";
+        ctx.lineWidth = 3;
+        ctx.shadowColor = "rgba(255, 50, 50, 0.45)";
+        ctx.shadowBlur = 16;
+        ctx.beginPath();
+        ctx.arc(0, 0, rock.r + 18 + Math.sin(time * 9) * 4, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      }
+
+      ctx.shadowColor = "rgba(0, 0, 0, 0.65)";
+      ctx.shadowBlur = 21;
+      ctx.shadowOffsetY = 12;
+
+      ctx.beginPath();
+
+      for (let i = 0; i < rock.points.length; i++) {
+        const p = rock.points[i];
+
+        if (i === 0) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
+      }
+
+      ctx.closePath();
+
+      const rg = ctx.createLinearGradient(-rock.r, -rock.r, rock.r, rock.r);
+      rg.addColorStop(0, "#a7b0ad");
+      rg.addColorStop(0.32, "#697475");
+      rg.addColorStop(0.65, "#3a4448");
+      rg.addColorStop(1, "#14191d");
+
+      ctx.fillStyle = rg;
+      ctx.fill();
+
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
+
+      ctx.strokeStyle = "rgba(1, 4, 6, 0.95)";
+      ctx.lineWidth = 4;
+      ctx.stroke();
+
+      ctx.fillStyle = "rgba(255, 255, 255, 0.14)";
+      ctx.beginPath();
+      ctx.ellipse(
+        -rock.r * 0.28,
+        -rock.r * 0.35,
+        rock.r * 0.24,
+        rock.r * 0.11,
+        -0.35,
+        0,
+        Math.PI * 2
+      );
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(0, 0, 0, 0.24)";
+      ctx.beginPath();
+      ctx.ellipse(
+        rock.r * 0.26,
+        rock.r * 0.3,
+        rock.r * 0.24,
+        rock.r * 0.13,
+        0.45,
+        0,
+        Math.PI * 2
+      );
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function drawMouse() {
+      ctx.save();
+      ctx.translate(mouse.x, mouse.y);
+
+      const pulse = 1 + Math.sin(mouse.pulse) * 0.08;
+
+      ctx.shadowColor = "rgba(185, 155, 220, 0.75)";
+      ctx.shadowBlur = 20;
+      ctx.scale(pulse, pulse);
+
+      ctx.fillStyle = "#bba5df";
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 21, 13, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#e6dcf8";
+      ctx.beginPath();
+      ctx.arc(-10, -9, 5, 0, Math.PI * 2);
+      ctx.arc(5, -10, 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.shadowBlur = 0;
+
+      ctx.strokeStyle = "#d8caf0";
+      ctx.lineWidth = 4;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(18, 3);
+      ctx.quadraticCurveTo(38, 13, 48, 0);
+      ctx.stroke();
+
+      ctx.fillStyle = "#03050a";
+      ctx.beginPath();
+      ctx.arc(-8, -2, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function drawBombMouse(bomb) {
+      ctx.save();
+      ctx.translate(bomb.x, bomb.y);
+
+      const pulse = 1 + Math.sin(bomb.pulse) * 0.1;
+
+      ctx.shadowColor = "rgba(255, 60, 40, 0.88)";
+      ctx.shadowBlur = 24;
+      ctx.scale(pulse, pulse);
+
+      ctx.fillStyle = "#1b1b1f";
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 22, 14, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#ff3131";
+      ctx.beginPath();
+      ctx.arc(-11, -9, 5, 0, Math.PI * 2);
+      ctx.arc(5, -10, 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.shadowBlur = 0;
+
+      ctx.strokeStyle = "#ffb000";
+      ctx.lineWidth = 4;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(18, 3);
+      ctx.quadraticCurveTo(38, 13, 48, 0);
+      ctx.stroke();
+
+      ctx.fillStyle = "#ff3131";
+      ctx.beginPath();
+      ctx.arc(-8, -2, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#ffb000";
+      ctx.font = "bold 15px Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("!", 1, 1);
+
+      ctx.restore();
+    }
+
+    function drawSnake() {
+      const skin = getSkin();
+
+      for (let i = snake.segments.length - 1; i >= 1; i--) {
+        const seg = snake.segments[i];
+        const prev = snake.segments[i - 1];
+
+        const angle = Math.atan2(prev.y - seg.y, prev.x - seg.x);
+        const tail = i / snake.segments.length;
+        const size = Math.max(6, 18 - tail * 8);
+
+        ctx.save();
+        ctx.translate(seg.x, seg.y);
+        ctx.rotate(angle);
+
+        ctx.shadowColor = skin.glow;
+        ctx.shadowBlur = i % 5 === 0 ? 11 : 0;
+
+        const bodyGradient = ctx.createLinearGradient(-size, -size, size, size);
+
+        if (i % 3 === 0) {
+          bodyGradient.addColorStop(0, "#050607");
+          bodyGradient.addColorStop(0.5, skin.secondary);
+          bodyGradient.addColorStop(1, "#050607");
+        } else {
+          bodyGradient.addColorStop(0, "#050607");
+          bodyGradient.addColorStop(0.5, skin.primary);
+          bodyGradient.addColorStop(1, skin.secondary);
+        }
+
+        ctx.fillStyle = bodyGradient;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, size, size * 0.72, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.shadowBlur = 0;
+
+        ctx.strokeStyle = "rgba(0, 0, 0, 0.64)";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.fillStyle = "rgba(255, 255, 255, 0.13)";
+        ctx.beginPath();
+        ctx.ellipse(
+          -size * 0.2,
+          -size * 0.27,
+          size * 0.35,
+          size * 0.12,
+          0,
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+
+        if (i % 4 === 0) {
+          ctx.strokeStyle = "rgba(255,255,255,0.08)";
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(-size * 0.45, 0);
+          ctx.quadraticCurveTo(0, -size * 0.35, size * 0.45, 0);
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      }
+
+      drawSnakeHead();
+    }
+
+    function drawSnakeHead() {
+      const head = snake.head;
+      const skin = getSkin();
+
+      ctx.save();
+      ctx.translate(head.x, head.y);
+      ctx.rotate(head.angle);
+
+      ctx.shadowColor = skin.glow;
+      ctx.shadowBlur = 20;
+
+      const hg = ctx.createLinearGradient(-22, -15, 25, 15);
+      hg.addColorStop(0, skin.secondary);
+      hg.addColorStop(0.52, skin.head);
+      hg.addColorStop(1, "#080808");
+
+      ctx.fillStyle = hg;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 26, 18, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.shadowBlur = 0;
+
+      ctx.strokeStyle = "#050505";
+      ctx.lineWidth = 4;
+      ctx.stroke();
+
+      ctx.fillStyle = "rgba(255,255,255,0.16)";
+      ctx.beginPath();
+      ctx.ellipse(-4, -7, 9, 4, -0.35, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "white";
+      ctx.beginPath();
+      ctx.arc(9, -7, 4.5, 0, Math.PI * 2);
+      ctx.arc(9, 7, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "black";
+      ctx.beginPath();
+      ctx.arc(11, -7, 2.2, 0, Math.PI * 2);
+      ctx.arc(11, 7, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      const tongueMove = Math.sin(time * 18) * 6;
+
+      ctx.strokeStyle = skin.tongue;
+      ctx.lineWidth = 4;
+      ctx.lineCap = "round";
+
+      ctx.beginPath();
+      ctx.moveTo(24, 0);
+      ctx.lineTo(40 + tongueMove, 0);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(40 + tongueMove, 0);
+      ctx.lineTo(52 + tongueMove, -7);
+      ctx.moveTo(40 + tongueMove, 0);
+      ctx.lineTo(52 + tongueMove, 7);
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    function drawParticles() {
+      for (const p of particles) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.life);
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur = 8;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    function drawFloatingTexts() {
+      for (const t of floatingTexts) {
+        ctx.save();
+
+        ctx.globalAlpha = Math.max(0, t.life);
+        ctx.font = "900 " + t.size + "px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        ctx.shadowColor = t.glow;
+        ctx.shadowBlur = 18;
+
+        ctx.lineWidth = 5;
+        ctx.strokeStyle = "rgba(0, 0, 0, 0.85)";
+        ctx.strokeText(t.text, t.x, t.y);
+
+        ctx.fillStyle = t.color;
+        ctx.fillText(t.text, t.x, t.y);
+
+        ctx.restore();
+      }
+    }
+
+    function drawRedFlash() {
+      if (redFlash <= 0) return;
+
+      ctx.save();
+      ctx.globalAlpha = redFlash;
+      ctx.fillStyle = "rgba(255, 0, 0, 0.35)";
+      ctx.fillRect(0, 0, w, h);
+      ctx.restore();
+    }
+
+    function draw() {
+      ctx.save();
+
+      if (screenShake > 0) {
+        ctx.translate(
+          random(-screenShake, screenShake),
+          random(-screenShake, screenShake)
+        );
+
+        screenShake *= 0.86;
+      }
+
+      drawBackground();
+
+      ctx.save();
+
+      ctx.translate(w / 2, h / 2);
+      ctx.scale(GAME_ZOOM, GAME_ZOOM);
+      ctx.translate(-w / 2, -h / 2);
+
+      for (const rock of rocks) {
+        drawRock(rock);
+      }
+
+      drawMouse();
+
+      for (const bomb of bombMice) {
+        drawBombMouse(bomb);
+      }
+
+      drawSnake();
+      drawParticles();
+      drawFloatingTexts();
+
+      ctx.restore();
+
+      drawRedFlash();
+
+      ctx.restore();
+    }
+
+    function loop(now) {
+      const delta = Math.min(0.033, (now - lastTime) / 1000 || 0);
+      lastTime = now;
+      time += delta;
+
+      if (!gameOver && !gameStarted) {
+        updateCountdown(now);
+      }
+
+      if (!gameOver && gameStarted) {
+        updateSnake(delta);
+        updateWorld(delta);
+        updateParticles(delta);
+        updateFloatingTexts(delta);
+        checkCollisions();
+      }
+
+      if (!gameOver && !gameStarted) {
+        updateParticles(delta);
+        updateFloatingTexts(delta);
+      }
+
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    createGame();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
+```
